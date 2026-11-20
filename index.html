@@ -2,93 +2,114 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3D House Explorer — three-storey home (illustrative)</title>
-<meta name="description" content="Interactive 3D dollhouse of a three-storey home built from hand-drawn floor plans. All property data is illustrative.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef1ec">
+<title>Heimro — Enebolig med hybel in 3D</title>
+<meta name="description" content="Explore a three-storey home with hybel in 3D: the whole house, a dollhouse cut-away and each floor, with room details, utility overlays and a Norwegian mortgage estimate.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236e8b7b'/%3E%3Cpath d='M8 23V14.2L24 11.6V23Z' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linejoin='round'/%3E%3Ccircle cx='11' cy='8.6' r='2.2' fill='%23efd7b5'/%3E%3C/svg%3E">
+<script>/* Edit the default asking price here, or open the page with ?pris=9500000 */ window.HEIMRO_CONFIG = { price: 8950000 };</script>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<div class="shell">
-  <header class="top">
-    <div class="brand"><span class="mark" aria-hidden="true"></span><b>tiiny host</b><span class="sub">3D House Explorer</span></div>
-    <a id="makeLink" class="make" target="_blank" rel="noopener">make your own with tiiny host <span aria-hidden="true">↗</span></a>
-  </header>
-  <main class="main">
-    <section class="viewer" id="viewer" aria-label="3D dollhouse viewer">
-      <canvas id="gl" aria-label="Interactive 3D model. Drag to orbit, scroll or pinch to zoom."></canvas>
-      <div id="fallback" hidden></div>
-      <div id="hotspots"></div>
-      <div class="hud tl">
-        <div class="chip" id="floorChip"></div>
-        <div class="roomcard" id="roomCard" hidden></div>
+<div class="app">
+  <section class="viewer" id="viewer" aria-label="3D house viewer">
+    <canvas id="gl" aria-label="Interactive 3D model. Drag to orbit, scroll or pinch to zoom."></canvas>
+    <div id="fallback" hidden></div>
+    <div id="hotspots"></div>
+
+    <header class="hud top">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#6e8b7b"/><path d="M8 23V14.2L24 11.6V23Z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 23v-4.6h4V23" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><circle cx="11" cy="8.6" r="2.2" fill="#efd7b5"/></svg>
+        <span class="name">Heimro</span><span class="tag">3D home viewer</span>
       </div>
-      <div class="hud tr keys" id="keysHint"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> floors · <kbd>D</kbd> dollhouse · <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> orbit · <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>O</kbd><kbd>I</kbd><kbd>F</kbd> views · <kbd>R</kbd> reset</div>
-      <nav class="hud bl floornav" id="floorNav" aria-label="Floor navigation"></nav>
-      <div class="hud br cams" role="group" aria-label="Camera">
-        <button type="button" class="cambtn" data-preset="overhead" aria-pressed="false">Overhead</button>
-        <button type="button" class="cambtn" data-preset="iso" aria-pressed="true">Isometric</button>
-        <button type="button" class="cambtn" data-preset="level" aria-pressed="false">Floor level</button>
-        <button type="button" class="cambtn ico" id="zoomOut" aria-label="Zoom out">−</button>
-        <button type="button" class="cambtn ico" id="zoomIn" aria-label="Zoom in">+</button>
-        <button type="button" class="cambtn" id="camReset">Reset</button>
+      <a id="makeLink" class="make" target="_blank" rel="noopener">make your own with tiiny host <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <div class="hud ctx" id="ctx" aria-live="polite"></div>
+
+    <div class="hud bottom">
+      <nav class="viewnav" id="viewNav" aria-label="View and floor">
+        <button type="button" class="vbtn" data-view="house" aria-pressed="true">House</button>
+        <button type="button" class="vbtn" data-view="0" aria-pressed="false">Dollhouse</button>
+        <button type="button" class="vbtn num" data-view="1" aria-pressed="false" aria-label="Floor 1"><small>Floor</small>1</button>
+        <button type="button" class="vbtn num" data-view="2" aria-pressed="false" aria-label="Floor 2"><small>Floor</small>2</button>
+        <button type="button" class="vbtn num" data-view="3" aria-pressed="false" aria-label="Floor 3"><small>Floor</small>3</button>
+      </nav>
+      <div class="cams" role="group" aria-label="Camera">
+        <button type="button" class="cambtn" data-preset="overhead" aria-pressed="false" title="Top view (O)" aria-label="Top view"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M5 12h14M12 5v14"/></svg></button>
+        <button type="button" class="cambtn" data-preset="iso" aria-pressed="true" title="3D angle (I)" aria-label="3D angle"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></button>
+        <button type="button" class="cambtn" data-preset="level" aria-pressed="false" title="Eye level (F)" aria-label="Eye level"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" class="cambtn" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+        <button type="button" class="cambtn" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24"><path d="M6 12h12M12 6v12"/></svg></button>
+        <button type="button" class="cambtn" id="camReset" aria-label="Reset view" title="Reset (R)"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5"/><path d="M5 4v4h4"/></svg></button>
       </div>
+    </div>
+  </section>
+
+  <aside class="side" aria-label="Property details">
+    <section class="intro">
+      <p class="eyebrow">Enebolig med hybel · 3 storeys</p>
+      <h1>A calm family home with its own hybel</h1>
+      <div class="price" id="priceBox">
+        <span class="plabel">Asking price</span>
+        <div class="pval">
+          <button type="button" id="priceShow" class="pshow" aria-label="Edit asking price"><span id="priceText"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+          <form id="priceForm" class="pedit" hidden novalidate>
+            <input id="priceInput" inputmode="numeric" autocomplete="off" aria-label="Asking price in kroner" aria-describedby="priceErr">
+            <button type="submit" class="pill">Save</button>
+            <button type="button" class="pill ghost" id="priceCancel">Cancel</button>
+          </form>
+        </div>
+        <span class="err" id="priceErr"></span>
+      </div>
+      <dl class="facts" id="facts"></dl>
     </section>
 
-    <aside class="side" aria-label="Property details">
-      <section>
-        <span class="badge">Illustrative data — not a real listing</span>
-        <h1>Enebolig med hybel</h1>
-        <p class="addr">Three storeys · 8 m wide · built from the hand-drawn plans</p>
-        <p class="price">8 950 000 kr <small>illustrative asking price</small></p>
-        <dl class="facts" id="facts"></dl>
-      </section>
+    <section class="rooms">
+      <div class="shead"><h2 id="roomsTitle">Rooms</h2>
+        <div class="stepper"><button type="button" id="roomPrev" aria-label="Previous room" title="Previous room ([)">‹</button><button type="button" id="roomNext" aria-label="Next room" title="Next room (])">›</button></div>
+      </div>
+      <article class="rcard" id="roomDetail" aria-live="polite"></article>
+      <ul class="chips" id="roomList"></ul>
+    </section>
 
-      <section>
-        <h2>Floor selection</h2>
-        <div class="floornav inline" id="floorSide" role="group" aria-label="Floor selection"></div>
-      </section>
+    <section>
+      <div class="shead"><h2>Utilities</h2><span class="note">illustrative</span></div>
+      <div class="utabs" role="tablist" aria-label="Utility overlays">
+        <button type="button" role="tab" class="utab" data-util="water" aria-selected="false"><i style="background:#5aa9d6"></i>Water</button>
+        <button type="button" role="tab" class="utab" data-util="elec" aria-selected="false"><i style="background:#e5b64e"></i>Electricity</button>
+        <button type="button" role="tab" class="utab" data-util="gas" aria-selected="false"><i style="background:#e07b5a"></i>Gas</button>
+        <button type="button" role="tab" class="utab" data-util="ac" aria-selected="false"><i style="background:#5fbfa3"></i>AC</button>
+      </div>
+      <div class="upanel" id="utilPanel" role="tabpanel" aria-live="polite"></div>
+    </section>
 
-      <section>
-        <h2>Rooms</h2>
-        <ul class="rooms" id="roomList"></ul>
-      </section>
+    <details class="mort" id="mortBox">
+      <summary><span><b>Mortgage estimate</b><small>Norwegian rules · boliglån</small></span><em id="mortSummary"></em></summary>
+      <form id="mortgage" novalidate>
+        <label class="wide">Price · kjøpesum (kr)<input name="price" inputmode="numeric" autocomplete="off" aria-describedby="err-price"><span class="err" id="err-price"></span></label>
+        <label class="wide">Equity · egenkapital (kr) <span class="hint" id="eqPct"></span><input name="equity" inputmode="numeric" autocomplete="off" aria-describedby="err-equity"><span class="err" id="err-equity"></span></label>
+        <label>Nominal rate (%)<input name="rate" inputmode="decimal" autocomplete="off" value="5,4" aria-describedby="err-rate"><span class="err" id="err-rate"></span></label>
+        <label>Term (years)<input name="years" inputmode="numeric" autocomplete="off" value="25" aria-describedby="err-years"><span class="err" id="err-years"></span></label>
+        <fieldset class="wide seg"><legend>Loan type</legend>
+          <label><input type="radio" name="type" value="annuitet" checked><span>Annuity · annuitet</span></label>
+          <label><input type="radio" name="type" value="serie"><span>Serial · serie</span></label>
+        </fieldset>
+        <label>Fee per month · termingebyr<input name="fee" inputmode="numeric" autocomplete="off" value="50" aria-describedby="err-fee"><span class="err" id="err-fee"></span></label>
+        <fieldset class="seg"><legend>Ownership</legend>
+          <label><input type="radio" name="owner" value="selveier" checked><span>Selveier</span></label>
+          <label><input type="radio" name="owner" value="borettslag"><span>Borettslag</span></label>
+        </fieldset>
+        <label>Gross household income / yr <span class="hint">optional</span><input name="income" inputmode="numeric" autocomplete="off" aria-describedby="err-income"><span class="err" id="err-income"></span></label>
+        <label>Other debt (kr) <span class="hint">optional</span><input name="otherDebt" inputmode="numeric" autocomplete="off" aria-describedby="err-otherDebt"><span class="err" id="err-otherDebt"></span></label>
+      </form>
+      <div class="mout" id="mortOut" aria-live="polite"></div>
+      <p class="small">Estimate only. Rules from utlånsforskriften: at least 10 % egenkapital, total debt at most 5 × gross income, and you must handle the higher of rate + 3 pp and 7 %. Closing costs use dokumentavgift 2.5 % (selveier) and tinglysing 545 kr per document.</p>
+    </details>
 
-      <section>
-        <h2>Utility overlays <small>illustrative</small></h2>
-        <div class="utabs" role="tablist" aria-label="Utility overlays">
-          <button type="button" role="tab" class="utab" data-util="water" aria-selected="false"><i style="background:#45b0ff"></i>Water</button>
-          <button type="button" role="tab" class="utab" data-util="elec" aria-selected="false"><i style="background:#ffd23f"></i>Electricity</button>
-          <button type="button" role="tab" class="utab" data-util="gas" aria-selected="false"><i style="background:#ff7b45"></i>Gas</button>
-          <button type="button" role="tab" class="utab" data-util="ac" aria-selected="false"><i style="background:#7af0c8"></i>AC</button>
-        </div>
-        <div class="upanel" id="utilPanel" role="tabpanel" aria-live="polite"></div>
-      </section>
-
-      <section>
-        <h2>Mortgage estimator <small>illustrative</small></h2>
-        <form id="mortgage" novalidate>
-          <label>Price (kr)<input name="price" inputmode="decimal" autocomplete="off" value="8 950 000" aria-describedby="err-price"><span class="err" id="err-price"></span></label>
-          <label>Down payment (kr)<input name="down" inputmode="decimal" autocomplete="off" value="1 342 500" aria-describedby="err-down"><span class="err" id="err-down"></span></label>
-          <label>Interest (% / year)<input name="rate" inputmode="decimal" autocomplete="off" value="5.4" aria-describedby="err-rate"><span class="err" id="err-rate"></span></label>
-          <label>Term (years)<input name="years" inputmode="numeric" autocomplete="off" value="25" aria-describedby="err-years"><span class="err" id="err-years"></span></label>
-        </form>
-        <div class="mout" id="mortOut" aria-live="polite"></div>
-        <small class="muted">Annuity loan, monthly payments, fees and tax excluded.</small>
-      </section>
-
-      <section>
-        <h2>Demo tour inquiry <small>local demo — nothing is sent</small></h2>
-        <form id="tour" novalidate>
-          <label>Name<input name="name" autocomplete="name" aria-describedby="terr-name"><span class="err" id="terr-name"></span></label>
-          <label>Email<input name="email" type="email" autocomplete="email" aria-describedby="terr-email"><span class="err" id="terr-email"></span></label>
-          <label class="wide">Preferred date<input name="date" type="date" aria-describedby="terr-date"><span class="err" id="terr-date"></span></label>
-          <button type="submit" class="cta">Request demo tour</button>
-        </form>
-        <p class="ok" id="tourOk" role="status" hidden></p>
-      </section>
-      <p class="foot">Model, prices, areas and utility routes are illustrative and derived from sketches. Not for construction or sale.</p>
-    </aside>
-  </main>
+    <p class="foot">3D model drawn from hand-sketched floor plans. Areas, furnishing and utility routes are approximate and illustrative.</p>
+  </aside>
 </div>
 <script src="assets/app.js"></script>
 </body>
